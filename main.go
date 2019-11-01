@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os/exec"
 	"strings"
@@ -13,7 +15,7 @@ func compile() string {
 		"--input-from-stdin",
 		"--output-to-stdout",
 		"--no-output-ozn")
-	cmd.Stdin = strings.NewReader("var int: a; solve satisfy;")
+	cmd.Stdin = strings.NewReader("var int: a; constraint a >= 1; constraint a <= 2; solve satisfy;")
 	out, err := cmd.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -21,16 +23,38 @@ func compile() string {
 	return string(out)
 }
 
-func solve(flatzinc string) string {
+func solve(flatzinc string) {
 	solve := exec.Command("minizinc",
 		"--solver", "org.gecode.gecode",
-		"--input-from-stdin")
+		"--input-from-stdin",
+		"--output-mode", "json",
+		"--solution-separator", "",
+		"-a",
+	)
 	solve.Stdin = strings.NewReader(flatzinc)
-	out, err := solve.Output()
+	stdout, err := solve.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return string(out)
+	if err := solve.Start(); err != nil {
+		log.Fatal(err)
+	}
+	type Solution struct {
+		Variable int `json:"a"`
+	}
+	dec := json.NewDecoder(stdout)
+	for {
+		var s Solution
+		if err := dec.Decode(&s); err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("a = %d\n", s.Variable)
+	}
+	if err := solve.Wait(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -39,6 +63,5 @@ func main() {
 	flatzinc := compile()
 	fmt.Print(flatzinc)
 
-	solution := solve(flatzinc)
-	fmt.Print(solution)
+	solve(flatzinc)
 }
