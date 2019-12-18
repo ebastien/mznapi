@@ -74,8 +74,8 @@ func (m *Model) Solve(solution interface{}) (SolutionStatus, error) {
 			// Search status document
 			status = SolutionStatus(doc["status"].(float64))
 		} else {
-			// Solution document
-			err := mapstructure.Decode(doc, &solution)
+			// Solution JSON document
+			err := mapstructure.Decode(doc, solution)
 			if err != nil {
 				return status, err
 			}
