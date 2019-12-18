@@ -10,23 +10,28 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// Model represents a Minizinc model.
 type Model struct {
 	mzn string
 	fzn string
 }
 
+// Minizinc returns the original Minizinc representation of the model.
 func (m *Model) Minizinc() string {
 	return m.mzn
 }
 
+// Flatzinc returns the compiled Flatzinc representation of the model.
 func (m *Model) Flatzinc() string {
 	return m.fzn
 }
 
+// Init initializes a model from its Minizinc representation.
 func (m *Model) Init(model string) {
 	m.mzn = model
 }
 
+// Compile translates a model to its Flatzinc representation.
 func (m *Model) Compile() error {
 	if len(m.mzn) == 0 {
 		return fmt.Errorf("Model not initialized")
@@ -44,6 +49,7 @@ func (m *Model) Compile() error {
 	return err
 }
 
+// Solve runs the solver on the compiled model and tries to retrieve a solution.
 func (m *Model) Solve(solution interface{}) (SolutionStatus, error) {
 	status := SolutionIncomplete
 	solve := exec.Command("minizinc",
@@ -71,7 +77,7 @@ func (m *Model) Solve(solution interface{}) (SolutionStatus, error) {
 			return status, err
 		}
 		if doc["status"] != nil {
-			// Search status document
+			// Search status JSON document
 			status = SolutionStatus(doc["status"].(float64))
 		} else {
 			// Solution JSON document
