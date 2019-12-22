@@ -58,6 +58,11 @@ func (m *Model) Solve(solution interface{}) (SolutionStatus, error) {
 		"--output-mode", "json",
 		"--solution-separator", "",
 		"--search-complete-msg", fmt.Sprintf(`{ "status": %d }`, SolutionComplete),
+		"--unsatisfiable-msg", fmt.Sprintf(`{ "status": %d }`, SolutionUnsat),
+		"--unbounded-msg", fmt.Sprintf(`{ "status": %d }`, SolutionUnbounded),
+		"--unsatorunbnd-msg", fmt.Sprintf(`{ "status": %d }`, SolutionUnsatUnbounded),
+		"--unknown-msg", fmt.Sprintf(`{ "status": %d }`, SolutionUnknown),
+		"--error-msg", fmt.Sprintf(`{ "status": %d }`, SolutionError),
 		"-a",
 	)
 	solve.Stdin = strings.NewReader(m.fzn)
