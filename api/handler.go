@@ -47,9 +47,7 @@ func (s *ServerState) solveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Serve(parallelism int) {
-	state := ServerState{
-		workers: make(chan struct{}, parallelism),
-	}
+	state := NewState(parallelism)
 
 	initModel(&state.model)
 
