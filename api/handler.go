@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,31 +19,33 @@ func initModel(m *solver.Model) {
 	}
 }
 
-func solveModel(m solver.Model) error {
-	type Solution struct {
-		Age int
-	}
-	var solution Solution
-
-	fmt.Printf("Solve model: %s\n", m.Flatzinc())
-
-	status, err := m.Solve(&solution)
-	if err == nil {
-		fmt.Printf("solution = %#v\n", solution)
-		fmt.Printf("status = %v\n", status)
-	}
-	return err
-}
-
 func (s *ServerState) solveHandler(w http.ResponseWriter, r *http.Request) {
 	s.workers <- struct{}{}
 	defer func() { <-s.workers }()
 
-	err := solveModel(s.model)
+	var solution struct{ Age int }
+
+	fmt.Printf("Solve model: %s\n", s.model.Flatzinc())
+
+	status, err := s.model.Solve(&solution)
+	if err == nil {
+		fmt.Printf("solution = %#v\n", solution)
+		fmt.Printf("status = %v\n", status)
+	}
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
-		w.WriteHeader(http.StatusOK)
+		m, err := json.Marshal(solution)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			_, err := w.Write(m)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			w.WriteHeader(http.StatusOK)
+		}
 	}
 }
 
