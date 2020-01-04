@@ -1,14 +1,20 @@
 package api
 
-import "github.com/ebastien/mznapi/solver"
+import (
+	"net/http"
 
-type ServerState struct {
+	"github.com/ebastien/mznapi/solver"
+)
+
+type serverState struct {
 	model   solver.Model
+	router  *http.ServeMux
 	workers chan struct{}
 }
 
-func NewState(parallelism int) *ServerState {
-	return &ServerState{
+func newState(parallelism int) *serverState {
+	return &serverState{
+		router:  http.NewServeMux(),
 		workers: make(chan struct{}, parallelism),
 	}
 }

@@ -4,14 +4,39 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	. "github.com/ebastien/mznapi/testutil"
 )
 
+func TestCreateHandler(t *testing.T) {
+
+	state := newState(1)
+
+	body := strings.NewReader(`{ "model": "var int: age; constraint age = 1;" }`)
+
+	req, err := http.NewRequest("POST", "/models", body)
+	Ok(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(state.createHandler())
+
+	handler.ServeHTTP(rr, req)
+
+	code := rr.Result().StatusCode
+	redirect := ""
+	if h := rr.Result().Header["Location"]; len(h) > 0 {
+		redirect = h[0]
+	}
+
+	Assert(t, code == http.StatusCreated, "Expected Created but got %v", code)
+	Assert(t, redirect == "http://localhost/models/1", "Expected redirection but got %v", redirect)
+}
+
 func TestSolveHandler(t *testing.T) {
 
-	state := NewState(1)
+	state := newState(1)
 	state.model.Init("var int: age; constraint age = 1;")
 	err := state.model.Compile()
 	Ok(t, err)
@@ -20,7 +45,7 @@ func TestSolveHandler(t *testing.T) {
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(state.solveHandler)
+	handler := http.HandlerFunc(state.solveHandler())
 
 	handler.ServeHTTP(rr, req)
 
