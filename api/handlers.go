@@ -3,33 +3,41 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"net/http"
-
-	"github.com/ebastien/mznapi/solver"
 )
 
-func initModel(m *solver.Model) {
-	m.Init("var int: age; constraint age >= 1; constraint age <= 2; solve satisfy;")
+func (s *Server) createHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.lock.Lock()
+		defer s.lock.Unlock()
 
-	fmt.Printf("Compile model: %s\n", m.Minizinc())
+		mzn, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			s.model.Init(string(mzn))
 
-	if err := m.Compile(); err != nil {
-		log.Fatal(err)
+			fmt.Printf("Compile model: %s\n", s.model.Minizinc())
+
+			if err := s.model.Compile(); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			} else {
+				w.Header().Set("Location", s.modelURI(1))
+				w.WriteHeader(http.StatusCreated)
+			}
+		}
 	}
 }
 
-func (s *serverState) createHandler() http.HandlerFunc {
+func (s *Server) solveHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Location", "TBD")
-		w.WriteHeader(http.StatusCreated)
-	}
-}
-
-func (s *serverState) solveHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+		s.lock.RLock()
 		s.workers <- struct{}{}
-		defer func() { <-s.workers }()
+		defer func() {
+			<-s.workers
+			s.lock.RUnlock()
+		}()
 
 		var solution struct{ Age int }
 
@@ -56,12 +64,4 @@ func (s *serverState) solveHandler() http.HandlerFunc {
 			}
 		}
 	}
-}
-
-func Serve(parallelism int) {
-	state := newState(parallelism)
-
-	initModel(&state.model)
-
-	log.Fatal(http.ListenAndServe(":8080", state.router))
 }

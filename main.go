@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	api.Serve(3)
+	srv := api.NewServer("localhost:8080", 3)
+	srv.Serve()
 }

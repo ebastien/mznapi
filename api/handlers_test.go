@@ -12,15 +12,15 @@ import (
 
 func TestCreateHandler(t *testing.T) {
 
-	state := newState(1)
+	server := NewServer("localhost:8080", 1)
 
-	body := strings.NewReader(`{ "model": "var int: age; constraint age = 1;" }`)
+	body := strings.NewReader(`var int: age; constraint age = 1;`)
 
 	req, err := http.NewRequest("POST", "/models", body)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(state.createHandler())
+	handler := http.HandlerFunc(server.createHandler())
 
 	handler.ServeHTTP(rr, req)
 
@@ -31,21 +31,21 @@ func TestCreateHandler(t *testing.T) {
 	}
 
 	Assert(t, code == http.StatusCreated, "Expected Created but got %v", code)
-	Assert(t, redirect == "http://localhost/models/1", "Expected redirection but got %v", redirect)
+	Assert(t, redirect == "http://localhost:8080/models/1", "Expected redirection but got %v", redirect)
 }
 
 func TestSolveHandler(t *testing.T) {
 
-	state := newState(1)
-	state.model.Init("var int: age; constraint age = 1;")
-	err := state.model.Compile()
+	server := NewServer("localhost:8080", 1)
+	server.model.Init("var int: age; constraint age = 1;")
+	err := server.model.Compile()
 	Ok(t, err)
 
 	req, err := http.NewRequest("GET", "/", nil)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(state.solveHandler())
+	handler := http.HandlerFunc(server.solveHandler())
 
 	handler.ServeHTTP(rr, req)
 

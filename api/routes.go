@@ -1,5 +1,6 @@
 package api
 
-func (s *serverState) routes() {
+func (s *Server) routes() {
 	s.router.HandleFunc("/", s.solveHandler())
+	s.router.HandleFunc("/models", s.createHandler())
 }
