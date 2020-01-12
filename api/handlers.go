@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// createHandler loads and compiles a Minizinc model.
 func (s *Server) createHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.lock.Lock()
@@ -30,6 +31,7 @@ func (s *Server) createHandler() http.HandlerFunc {
 	}
 }
 
+// solveHandler solves the current model and returns the solution as JSON.
 func (s *Server) solveHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.lock.RLock()

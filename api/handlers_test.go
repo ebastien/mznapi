@@ -13,16 +13,15 @@ import (
 func TestCreateHandler(t *testing.T) {
 
 	server := NewServer("localhost:8080", 1)
+	server.routes()
 
 	body := strings.NewReader(`var int: age; constraint age = 1;`)
 
-	req, err := http.NewRequest("POST", "/models", body)
+	req, err := http.NewRequest("POST", "/model", body)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.createHandler())
-
-	handler.ServeHTTP(rr, req)
+	server.ServeHTTP(rr, req)
 
 	code := rr.Result().StatusCode
 	redirect := ""
@@ -37,17 +36,16 @@ func TestCreateHandler(t *testing.T) {
 func TestSolveHandler(t *testing.T) {
 
 	server := NewServer("localhost:8080", 1)
+	server.routes()
 	server.model.Init("var int: age; constraint age = 1;")
 	err := server.model.Compile()
 	Ok(t, err)
 
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequest("GET", "/model/solution", nil)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.solveHandler())
-
-	handler.ServeHTTP(rr, req)
+	server.ServeHTTP(rr, req)
 
 	Assert(t, rr.Code == http.StatusOK, "Expected OK but got %v", rr.Code)
 

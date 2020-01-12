@@ -8,6 +8,7 @@ import (
 	"github.com/ebastien/mznapi/solver"
 )
 
+// Server maintains the state of the HTTP APIs.
 type Server struct {
 	model   solver.Model
 	address string
@@ -17,6 +18,7 @@ type Server struct {
 	workers chan struct{}
 }
 
+// NewServer creates a new server instance.
 func NewServer(addr string, parallelism int) *Server {
 	return &Server{
 		address: addr,
@@ -26,6 +28,13 @@ func NewServer(addr string, parallelism int) *Server {
 	}
 }
 
+// Serve runs the server main loop to handle incoming connections.
 func (s *Server) Serve() {
 	log.Fatal(http.ListenAndServe(s.address, s.router))
+}
+
+// ServeHTTP proxies to the underlying router implementation.
+// It implements the http.Handler interface.
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
 }
