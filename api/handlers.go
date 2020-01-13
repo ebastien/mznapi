@@ -41,7 +41,7 @@ func (s *Server) solveHandler() http.HandlerFunc {
 			s.lock.RUnlock()
 		}()
 
-		var solution struct{ Age int }
+		var solution map[string]interface{}
 
 		fmt.Printf("Solve model: %s\n", s.model.Flatzinc())
 

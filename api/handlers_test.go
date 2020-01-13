@@ -37,7 +37,7 @@ func TestSolveHandler(t *testing.T) {
 
 	server := NewServer("localhost:8080", 1)
 	server.routes()
-	server.model.Init("var int: age; constraint age = 1;")
+	server.model.Init("var int: variable; constraint variable = 1;")
 	err := server.model.Compile()
 	Ok(t, err)
 
@@ -50,9 +50,9 @@ func TestSolveHandler(t *testing.T) {
 	Assert(t, rr.Code == http.StatusOK, "Expected OK but got %v", rr.Code)
 
 	dec := json.NewDecoder(rr.Body)
-	solution := struct{ Age int }{}
+	solution := struct{ Variable int }{}
 	err = dec.Decode(&solution)
 	Ok(t, err)
 
-	Assert(t, solution.Age == 1, "Expected solution to be 1 but got %v", solution.Age)
+	Assert(t, solution.Variable == 1, "Expected solution to be 1 but got %v", solution.Variable)
 }
