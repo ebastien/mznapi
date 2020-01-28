@@ -17,7 +17,7 @@ func TestCreateHandler(t *testing.T) {
 
 	body := strings.NewReader(`var int: age; constraint age = 1;`)
 
-	req, err := http.NewRequest("POST", "/model", body)
+	req, err := http.NewRequest("POST", "/models", body)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
@@ -41,7 +41,7 @@ func TestSolveHandler(t *testing.T) {
 	err := server.model.Compile()
 	Ok(t, err)
 
-	req, err := http.NewRequest("GET", "/model/solution", nil)
+	req, err := http.NewRequest("GET", "/models/1/solution", nil)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()

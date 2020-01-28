@@ -1,10 +1,27 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+)
 
-func matchRoute(method string, path string, handle http.HandlerFunc) (string, http.HandlerFunc) {
-	return path, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != path {
+type PathMatcher interface {
+	Route() string
+	Match(path string) bool
+}
+
+type ExactMatch string
+
+func (pattern ExactMatch) Match(path string) bool {
+	return string(pattern) == path
+}
+
+func (pattern ExactMatch) Route() string {
+	return string(pattern)
+}
+
+func matchRoute(method string, pattern PathMatcher, handle http.HandlerFunc) (string, http.HandlerFunc) {
+	return pattern.Route(), func(w http.ResponseWriter, r *http.Request) {
+		if !pattern.Match(r.URL.Path) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -17,6 +34,6 @@ func matchRoute(method string, path string, handle http.HandlerFunc) (string, ht
 }
 
 func (s *Server) routes() {
-	s.router.HandleFunc(matchRoute("GET", "/model/solution", s.solveHandler()))
-	s.router.HandleFunc(matchRoute("POST", "/model", s.createHandler()))
+	s.router.HandleFunc(matchRoute("GET", ExactMatch(s.Path(ModelResource, "1", "solution")), s.solveHandler()))
+	s.router.HandleFunc(matchRoute("POST", ExactMatch(s.Path(ModelResource)), s.createHandler()))
 }

@@ -12,7 +12,7 @@ func TestUnknownURL(t *testing.T) {
 	server := NewServer(":8080", 1)
 	server.routes()
 
-	req, err := http.NewRequest("GET", "/model/unknown_url", nil)
+	req, err := http.NewRequest("GET", "/models/unknown_url", nil)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
@@ -25,7 +25,7 @@ func TestInvalidMethod(t *testing.T) {
 	server := NewServer(":8080", 1)
 	server.routes()
 
-	req, err := http.NewRequest("POST", "/model/solution", nil)
+	req, err := http.NewRequest("POST", "/models/1/solution", nil)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()
