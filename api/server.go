@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ebastien/mznapi/solver"
+	"github.com/go-chi/chi"
 )
 
 // Server maintains the state of the HTTP APIs.
@@ -13,7 +14,7 @@ type Server struct {
 	model   solver.Model
 	address string
 	baseURL string
-	router  *http.ServeMux
+	router  *chi.Mux
 	lock    sync.RWMutex
 	workers chan struct{}
 }
@@ -23,7 +24,7 @@ func NewServer(addr string, parallelism int) *Server {
 	return &Server{
 		address: addr,
 		baseURL: "http://" + addr,
-		router:  http.NewServeMux(),
+		router:  chi.NewRouter(),
 		workers: make(chan struct{}, parallelism),
 	}
 }
