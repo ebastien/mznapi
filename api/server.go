@@ -39,11 +39,3 @@ func (s *Server) Serve() {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
-
-func (s *Server) Path(r Resource, args ...string) string {
-	return resourceLink(r, "", args...)
-}
-
-func (s *Server) URI(r Resource, args ...string) string {
-	return resourceLink(r, s.baseURL, args...)
-}

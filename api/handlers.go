@@ -24,7 +24,7 @@ func (s *Server) createHandler() http.HandlerFunc {
 			if err := s.model.Compile(); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
-				w.Header().Set("Location", s.URI(ModelResource, "1"))
+				w.Header().Set("Location", s.modelURI("1"))
 				w.WriteHeader(http.StatusCreated)
 			}
 		}
