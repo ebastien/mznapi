@@ -16,6 +16,13 @@ type Model struct {
 	fzn string
 }
 
+// NewModel returns a pointer to a new model.
+func NewModel(mzn string) *Model {
+	return &Model{
+		mzn: mzn,
+	}
+}
+
 // Minizinc returns the original Minizinc representation of the model.
 func (m *Model) Minizinc() string {
 	return m.mzn
@@ -24,11 +31,6 @@ func (m *Model) Minizinc() string {
 // Flatzinc returns the compiled Flatzinc representation of the model.
 func (m *Model) Flatzinc() string {
 	return m.fzn
-}
-
-// Init initializes a model from its Minizinc representation.
-func (m *Model) Init(model string) {
-	m.mzn = model
 }
 
 // Compile translates a model to its Flatzinc representation.

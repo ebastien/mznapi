@@ -7,11 +7,12 @@ import (
 
 	"github.com/ebastien/mznapi/solver"
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
 
 // Server maintains the state of the HTTP APIs.
 type Server struct {
-	model   solver.Model
+	models  map[uuid.UUID]solver.Model
 	address string
 	baseURL string
 	router  *chi.Mux
@@ -22,6 +23,7 @@ type Server struct {
 // NewServer creates a new server instance.
 func NewServer(addr string, parallelism int) *Server {
 	return &Server{
+		models:  make(map[uuid.UUID]solver.Model),
 		address: addr,
 		baseURL: "http://" + addr,
 		router:  chi.NewRouter(),

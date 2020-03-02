@@ -9,8 +9,7 @@ import (
 )
 
 func TestCompileOk(t *testing.T) {
-	m := solver.Model{}
-	m.Init("var int: age;")
+	m := solver.NewModel("var int: age;")
 	err := m.Compile()
 	Ok(t, err)
 	fzn := m.Flatzinc()
@@ -18,15 +17,13 @@ func TestCompileOk(t *testing.T) {
 }
 
 func TestCompileFail(t *testing.T) {
-	m := solver.Model{}
-	m.Init("invalid model")
+	m := solver.NewModel("invalid model")
 	err := m.Compile()
 	Assert(t, err != nil, "Compilation expected to fail but got %v", err)
 }
 
 func TestSolveComplete(t *testing.T) {
-	m := solver.Model{}
-	m.Init(`var int: age; constraint age >= 2 /\ age <= 4; solve maximize age;`)
+	m := solver.NewModel(`var int: age; constraint age >= 2 /\ age <= 4; solve maximize age;`)
 	err := m.Compile()
 	Ok(t, err)
 	solution := struct{ Age int }{}
@@ -37,8 +34,7 @@ func TestSolveComplete(t *testing.T) {
 }
 
 func TestSolveUnsat(t *testing.T) {
-	m := solver.Model{}
-	m.Init(`var int: age; constraint age < 2; constraint age > 4; solve satisfy;`)
+	m := solver.NewModel(`var int: age; constraint age < 2; constraint age > 4; solve satisfy;`)
 	err := m.Compile()
 	Ok(t, err)
 	solution := struct{}{}

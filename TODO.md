@@ -1,3 +1,3 @@
 
-* More than one model
+* Tests multiple models
 * Logs

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ebastien/mznapi/solver"
 	. "github.com/ebastien/mznapi/testutil"
+	"github.com/google/uuid"
 )
 
 func TestCreateHandler(t *testing.T) {
@@ -30,18 +32,24 @@ func TestCreateHandler(t *testing.T) {
 	}
 
 	Assert(t, code == http.StatusCreated, "Expected Created but got %v", code)
-	Assert(t, redirect == "http://localhost:8080/models/1", "Expected redirection but got %v", redirect)
+	Assert(t,
+		strings.HasPrefix(redirect, "http://localhost:8080/models/"),
+		"Expected redirection but got %v", redirect)
 }
 
 func TestSolveHandler(t *testing.T) {
 
 	server := NewServer("localhost:8080", 1)
 	server.routes()
-	server.model.Init("var int: variable; constraint variable = 1;")
-	err := server.model.Compile()
+
+	uuid := uuid.New()
+	model := solver.NewModel("var int: variable; constraint variable = 1;")
+	err := model.Compile()
 	Ok(t, err)
 
-	req, err := http.NewRequest("GET", "/models/1/solution", nil)
+	server.models[uuid] = *model
+
+	req, err := http.NewRequest("GET", "/models/"+uuid.String()+"/solution", nil)
 	Ok(t, err)
 
 	rr := httptest.NewRecorder()

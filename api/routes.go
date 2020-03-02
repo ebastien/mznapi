@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/go-chi/chi"
 )
@@ -9,7 +10,9 @@ import (
 func (s *Server) routes() {
 	s.router.Route("/models", func(r chi.Router) {
 		r.Post("/", s.createHandler())
-		r.Get("/{modelID}/solution", s.solveHandler())
+		r.Get("/{modelID}/solution", s.solveHandler(
+			func(r *http.Request) string { return chi.URLParam(r, "modelID") },
+		))
 	})
 }
 
