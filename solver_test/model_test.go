@@ -27,7 +27,7 @@ func TestSolveComplete(t *testing.T) {
 	err := m.Compile()
 	Ok(t, err)
 	solution := struct{ Age int }{}
-	status, err := m.Solve(&solution)
+	status, err := m.Solve(&solution, 5000)
 	Ok(t, err)
 	Assert(t, status == solver.SolutionComplete, "Solution expected to be complete but got %v", status)
 	Assert(t, solution.Age == 4, "Solution expected to be 4 but got %v", solution.Age)
@@ -38,7 +38,17 @@ func TestSolveUnsat(t *testing.T) {
 	err := m.Compile()
 	Ok(t, err)
 	solution := struct{}{}
-	status, err := m.Solve(&solution)
+	status, err := m.Solve(&solution, 5000)
 	Ok(t, err)
 	Assert(t, status == solver.SolutionUnsat, "Solution expected to be unsatisfiable but got %v", status)
+}
+
+func TestTimeout(t *testing.T) {
+	m := solver.NewModel(`var int: a; var int: b; constraint a * b = 5555555; solve satisfy;`)
+	err := m.Compile()
+	Ok(t, err)
+	solution := struct{}{}
+	status, err := m.Solve(&solution, 1000)
+	Ok(t, err)
+	Assert(t, status == solver.SolutionUnknown, "Solution expected to be unknown but got %v", status)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -52,7 +53,7 @@ func (m *Model) Compile() error {
 }
 
 // Solve runs the solver on the compiled model and tries to retrieve a solution.
-func (m *Model) Solve(solution interface{}) (SolutionStatus, error) {
+func (m *Model) Solve(solution interface{}, timeout int) (SolutionStatus, error) {
 	status := SolutionIncomplete
 	solve := exec.Command("minizinc",
 		"--solver", "org.gecode.gecode",
@@ -65,6 +66,7 @@ func (m *Model) Solve(solution interface{}) (SolutionStatus, error) {
 		"--unsatorunbnd-msg", fmt.Sprintf(`{ "status": %d }`, SolutionUnsatUnbounded),
 		"--unknown-msg", fmt.Sprintf(`{ "status": %d }`, SolutionUnknown),
 		"--error-msg", fmt.Sprintf(`{ "status": %d }`, SolutionError),
+		"--time-limit", strconv.Itoa(timeout),
 		"-a",
 	)
 	solve.Stdin = strings.NewReader(m.fzn)

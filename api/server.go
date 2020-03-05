@@ -22,13 +22,15 @@ type Server struct {
 
 // NewServer creates a new server instance.
 func NewServer(addr string, parallelism int) *Server {
-	return &Server{
+	server := &Server{
 		models:  make(map[uuid.UUID]solver.Model),
 		address: addr,
 		baseURL: "http://" + addr,
 		router:  chi.NewRouter(),
 		workers: make(chan struct{}, parallelism),
 	}
+	server.bindRoutes()
+	return server
 }
 
 // Serve runs the server main loop to handle incoming connections.

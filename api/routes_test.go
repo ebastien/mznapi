@@ -10,7 +10,6 @@ import (
 
 func TestUnknownURL(t *testing.T) {
 	server := NewServer(":8080", 1)
-	server.routes()
 
 	req, err := http.NewRequest("GET", "/models/unknown_url", nil)
 	Ok(t, err)
@@ -23,7 +22,6 @@ func TestUnknownURL(t *testing.T) {
 
 func TestInvalidMethod(t *testing.T) {
 	server := NewServer(":8080", 1)
-	server.routes()
 
 	req, err := http.NewRequest("POST", "/models/1/solution", nil)
 	Ok(t, err)

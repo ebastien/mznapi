@@ -1,3 +1,1 @@
-
-* Tests multiple models
-* Logs
+* Command line arguments
