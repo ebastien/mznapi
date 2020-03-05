@@ -1,9 +1,10 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ebastien/mznapi/solver"
 	"github.com/google/uuid"
