@@ -110,7 +110,7 @@ func TestSolveHandler(t *testing.T) {
 	err := model.Compile()
 	Ok(t, err)
 
-	server.models[uuid] = *model
+	server.models[uuid] = model
 
 	solution := struct{ Variable int }{}
 

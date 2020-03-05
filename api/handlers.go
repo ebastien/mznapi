@@ -45,7 +45,7 @@ func (s *Server) createHandler(uri func(id string) string) http.HandlerFunc {
 			return
 		}
 
-		s.models[id] = *model
+		s.models[id] = model
 
 		w.Header().Set("Location", uri(id.String()))
 		w.WriteHeader(http.StatusCreated)
