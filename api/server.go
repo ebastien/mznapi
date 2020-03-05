@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/ebastien/mznapi/solver"
-	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 )
 
@@ -15,7 +14,7 @@ type Server struct {
 	models  map[uuid.UUID]solver.Model
 	address string
 	baseURL string
-	router  *chi.Mux
+	router  http.Handler
 	lock    sync.RWMutex
 	workers chan struct{}
 }
@@ -26,10 +25,9 @@ func NewServer(addr string, parallelism int) *Server {
 		models:  make(map[uuid.UUID]solver.Model),
 		address: addr,
 		baseURL: "http://" + addr,
-		router:  chi.NewRouter(),
 		workers: make(chan struct{}, parallelism),
 	}
-	server.bindRoutes()
+	server.router = newRouter(server)
 	return server
 }
 

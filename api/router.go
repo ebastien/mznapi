@@ -7,8 +7,10 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (s *Server) bindRoutes() {
-	s.router.Route("/models", func(r chi.Router) {
+// newRouter creates an http.Handler routing resources to the appropriate handler.
+func newRouter(s *Server) http.Handler {
+	router := chi.NewRouter()
+	router.Route("/models", func(r chi.Router) {
 		r.Post("/", s.createHandler(
 			// Compose a model resource URI from a model internal identifer.
 			func(id string) string {
@@ -22,4 +24,5 @@ func (s *Server) bindRoutes() {
 			},
 		))
 	})
+	return router
 }
