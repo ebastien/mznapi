@@ -1,2 +1,2 @@
-* Command line arguments
 * Models store
+* Better solution representation

@@ -1,3 +1,5 @@
+sources = api/*.go solver/*.go
+
 .DEFAULT_GOAL: build
 
 .PHONY: build
@@ -15,5 +17,5 @@ clean:
 run:
 	go run ./cmd/server/main.go
 
-build/%: cmd/%/main.go
+build/%: cmd/%/main.go ${sources}
 	go build -o $@ $< 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -50,17 +49,12 @@ func createModel(handler http.Handler, model string) (string, error) {
 		return "", serverError(code, "Expected Created but got %d", code)
 	}
 
-	location := ""
-	if h := rr.Result().Header["Location"]; len(h) > 0 {
-		location = h[0]
-	}
-
-	uri, err := url.Parse(location)
+	location, err := rr.Result().Location()
 	if err != nil {
 		return "", err
 	}
 
-	return uri.Path, nil
+	return location.Path, nil
 }
 
 // solveModel fetches the solution of a model from a test server instance.
@@ -76,6 +70,12 @@ func solveModel(handler http.Handler, path string, solution interface{}) error {
 	code := rr.Result().StatusCode
 	if code != http.StatusOK {
 		return serverError(code, "Expected OK but got %d", code)
+	}
+
+	contentType := rr.Result().Header.Get("Content-Type")
+
+	if !strings.HasPrefix(contentType, "application/json") {
+		return serverError(code, "Expected JSON but got %s", contentType)
 	}
 
 	dec := json.NewDecoder(rr.Body)
@@ -112,12 +112,18 @@ func TestSolveHandler(t *testing.T) {
 
 	server.models[uuid] = model
 
-	solution := struct{ Variable int }{}
+	solution := struct {
+		SolverStatus *solver.SolutionStatus
+		Variable     int
+	}{}
 
 	err = solveModel(server, "/models/"+uuid.String(), &solution)
 	Ok(t, err)
 
-	Assert(t, solution.Variable == 1, "Expected solution to be 1 but got %d", solution.Variable)
+	Assert(t, solution.SolverStatus != nil && *solution.SolverStatus == solver.SolutionComplete,
+		"Expected complete solution")
+	Assert(t, solution.Variable == 1,
+		"Expected solution to be 1 but got %d", solution.Variable)
 }
 
 func TestMultipleModels(t *testing.T) {

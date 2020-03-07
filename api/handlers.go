@@ -81,27 +81,28 @@ func (s *Server) solveHandler(id func(*http.Request) string) http.HandlerFunc {
 		log.Debugf("solving model: '%.64s'", model.Flatzinc())
 
 		status, err := model.Solve(&solution, 50000)
-		if err == nil {
-			log.WithField("status", status).Debugf("solution: %#v", solution)
-		}
-
 		if err != nil {
+			log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		solution["SolverStatus"] = status
 
 		m, err := json.Marshal(solution)
 		if err != nil {
+			log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		log.WithField("status", status).Debugf("solution: %s", string(m))
+
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(m)
 		if err != nil {
+			log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
 	}
 }

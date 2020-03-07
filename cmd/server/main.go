@@ -1,13 +1,24 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/ebastien/mznapi/api"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	addr := "localhost:8080"
-	log.WithField("addr", addr).Info("Starting server")
-	srv := api.NewServer(addr, 3)
+
+	addr := flag.String("addr", "localhost:8080", "address to listen to")
+	debug := flag.Bool("debug", false, "enable debug logs")
+
+	flag.Parse()
+
+	if *debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	log.WithField("addr", *addr).Info("Starting server")
+	srv := api.NewServer(*addr, 3)
 	srv.Serve()
 }
