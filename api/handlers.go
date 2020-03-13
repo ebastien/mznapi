@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ebastien/mznapi/service"
 	"github.com/ebastien/mznapi/solver"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func (s *Server) createHandler(uri func(id string) string) http.HandlerFunc {
 
 		mzn, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Error("Unable to read the request body")
+			log.Errorf("Unable to read the request body: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -28,32 +29,25 @@ func (s *Server) createHandler(uri func(id string) string) http.HandlerFunc {
 			return
 		}
 
-		model := solver.NewModel(string(mzn))
-
-		log.Debugf("compiling model: '%.64s'", model.Minizinc())
-
-		if err := model.Compile(); err != nil {
-			log.Errorf("Unable to compile the model: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		id, err := uuid.NewRandom()
+		uuid, err := service.CreateModel(s.models, string(mzn))
 		if err != nil {
-			log.Error("Unable to generate a UUID")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		s.models[id] = model
-
-		w.Header().Set("Location", uri(id.String()))
+		w.Header().Set("Location", uri(uuid.String()))
 		w.WriteHeader(http.StatusCreated)
 	}
 }
 
 // solveHandler solves the given model and returns the solution as JSON.
 func (s *Server) solveHandler(id func(*http.Request) string) http.HandlerFunc {
+
+	type Response struct {
+		Solution map[string]interface{} `json:"solution"`
+		Status   solver.SolutionStatus  `json:"solver_status"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.lock.RLock()
 		s.workers <- struct{}{}
@@ -63,44 +57,38 @@ func (s *Server) solveHandler(id func(*http.Request) string) http.HandlerFunc {
 		}()
 
 		uuid, err := uuid.Parse(id(r))
-
 		if err != nil {
+			log.Errorf("Unable to parse the model uuid: %s", err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		model, ok := s.models[uuid]
-
-		if !ok {
+		if !service.ModelExists(s.models, uuid) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		var solution map[string]interface{}
-
-		log.Debugf("solving model: '%.64s'", model.Flatzinc())
-
-		status, err := model.Solve(&solution, 50000)
+		res, err := service.SolveModel(s.models, uuid)
 		if err != nil {
-			log.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		solution["SolverStatus"] = status
-
-		m, err := json.Marshal(solution)
-		if err != nil {
-			log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		log.WithField("status", status).Debugf("solution: %s", string(m))
+		response := Response{
+			Solution: res.Solution,
+			Status:   res.Status,
+		}
+		msg, err := json.Marshal(response)
+		if err != nil {
+			log.Errorf("Unable to serialize the response: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_, err = w.Write(m)
+		_, err = w.Write(msg)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("Unable to write the response: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

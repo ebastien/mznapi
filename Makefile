@@ -1,4 +1,4 @@
-sources = api/*.go solver/*.go
+sources = api/*.go solver/*.go service/*.go store/*.go
 
 .DEFAULT_GOAL: build
 

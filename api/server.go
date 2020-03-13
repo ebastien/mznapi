@@ -6,15 +6,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/ebastien/mznapi/solver"
-	"github.com/google/uuid"
+	"github.com/ebastien/mznapi/service"
+	"github.com/ebastien/mznapi/store"
 )
-
-type ModelStore map[uuid.UUID]*solver.Model
 
 // Server maintains the state of the HTTP APIs.
 type Server struct {
-	models  ModelStore
+	models  service.ModelStore
 	address string
 	baseURL string
 	router  http.Handler
@@ -25,7 +23,7 @@ type Server struct {
 // NewServer creates a new server instance.
 func NewServer(addr string, parallelism int) *Server {
 	server := &Server{
-		models:  make(ModelStore),
+		models:  store.NewMemoryStore(),
 		address: addr,
 		baseURL: "http://" + addr,
 		workers: make(chan struct{}, parallelism),

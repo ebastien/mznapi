@@ -13,15 +13,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type ServerError struct {
+type testError struct {
 	msg    string
 	status int
 }
 
-func (e *ServerError) Error() string { return e.msg }
+func (e *testError) Error() string { return e.msg }
 
-func serverError(status int, format string, a ...interface{}) error {
-	return &ServerError{
+func newTestError(status int, format string, a ...interface{}) error {
+	return &testError{
 		msg:    fmt.Sprintf(format, a...),
 		status: status,
 	}
@@ -46,7 +46,7 @@ func createModel(handler http.Handler, model string) (string, error) {
 
 	code := rr.Result().StatusCode
 	if code != http.StatusCreated {
-		return "", serverError(code, "Expected Created but got %d", code)
+		return "", newTestError(code, "Expected Created but got %d", code)
 	}
 
 	location, err := rr.Result().Location()
@@ -69,13 +69,13 @@ func solveModel(handler http.Handler, path string, solution interface{}) error {
 
 	code := rr.Result().StatusCode
 	if code != http.StatusOK {
-		return serverError(code, "Expected OK but got %d", code)
+		return newTestError(code, "Expected OK but got %d", code)
 	}
 
 	contentType := rr.Result().Header.Get("Content-Type")
 
 	if !strings.HasPrefix(contentType, "application/json") {
-		return serverError(code, "Expected JSON but got %s", contentType)
+		return newTestError(code, "Expected JSON but got %s", contentType)
 	}
 
 	dec := json.NewDecoder(rr.Body)
@@ -97,7 +97,7 @@ func TestCreateHandler(t *testing.T) {
 func TestEmptyModel(t *testing.T) {
 	server := newServer()
 	_, err := createModel(server, "")
-	serr := err.(*ServerError)
+	serr := err.(*testError)
 	Assert(t, serr.status == http.StatusBadRequest, "Expected BadRequest but got %d", serr.status)
 }
 
@@ -110,23 +110,35 @@ func TestSolveHandler(t *testing.T) {
 	err := model.Compile()
 	Ok(t, err)
 
-	server.models[uuid] = model
-
-	solution := struct {
-		SolverStatus *solver.SolutionStatus
-		Variable     int
-	}{}
-
-	err = solveModel(server, "/models/"+uuid.String(), &solution)
+	err = server.models.Store(uuid, model)
 	Ok(t, err)
 
-	Assert(t, solution.SolverStatus != nil && *solution.SolverStatus == solver.SolutionComplete,
+	type SolverSolution struct {
+		Variable int
+	}
+	response := struct {
+		Solution SolverSolution         `json:"solution"`
+		Status   *solver.SolutionStatus `json:"solver_status"`
+	}{}
+
+	err = solveModel(server, "/models/"+uuid.String(), &response)
+	Ok(t, err)
+
+	Assert(t, response.Status != nil && *response.Status == solver.SolutionComplete,
 		"Expected complete solution")
-	Assert(t, solution.Variable == 1,
-		"Expected solution to be 1 but got %d", solution.Variable)
+	Assert(t, response.Solution.Variable == 1,
+		"Expected solution to be 1 but got %d", response.Solution.Variable)
 }
 
 func TestMultipleModels(t *testing.T) {
+
+	type SolverSolution struct {
+		Variable int
+	}
+	response := struct {
+		Solution SolverSolution         `json:"solution"`
+		Status   *solver.SolutionStatus `json:"solver_status"`
+	}{}
 
 	server := newServer()
 
@@ -136,13 +148,13 @@ func TestMultipleModels(t *testing.T) {
 	loc2, err := createModel(server, `var int: variable; constraint variable = 2;`)
 	Ok(t, err)
 
-	solution := struct{ Variable int }{}
-
-	err = solveModel(server, loc1, &solution)
+	err = solveModel(server, loc1, &response)
 	Ok(t, err)
-	Assert(t, solution.Variable == 1, "Expected solution to be 1 but got %d", solution.Variable)
+	Assert(t, response.Solution.Variable == 1,
+		"Expected solution to be 1 but got %d", response.Solution.Variable)
 
-	err = solveModel(server, loc2, &solution)
+	err = solveModel(server, loc2, &response)
 	Ok(t, err)
-	Assert(t, solution.Variable == 2, "Expected solution to be 1 but got %d", solution.Variable)
+	Assert(t, response.Solution.Variable == 2,
+		"Expected solution to be 1 but got %d", response.Solution.Variable)
 }
