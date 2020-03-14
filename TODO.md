@@ -1,2 +1,1 @@
-* Models store
-* Better solution representation
+* validate Content-Type

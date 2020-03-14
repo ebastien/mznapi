@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ebastien/mznapi/service"
-	"github.com/ebastien/mznapi/store"
 )
 
 // Server maintains the state of the HTTP APIs.
@@ -21,9 +20,9 @@ type Server struct {
 }
 
 // NewServer creates a new server instance.
-func NewServer(addr string, parallelism int) *Server {
+func NewServer(addr string, parallelism int, store service.ModelStore) *Server {
 	server := &Server{
-		models:  store.NewMemoryStore(),
+		models:  store,
 		address: addr,
 		baseURL: "http://" + addr,
 		workers: make(chan struct{}, parallelism),

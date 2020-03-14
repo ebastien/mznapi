@@ -6,17 +6,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// SolverResult contains the output of the solver execution.
 type SolverResult struct {
 	Status   solver.SolutionStatus
 	Solution map[string]interface{}
 }
 
+// ModelStore specifies the interface with model stores.
 type ModelStore interface {
 	Exists(id uuid.UUID) bool
 	Store(id uuid.UUID, model *solver.Model) error
 	Load(id uuid.UUID) (*solver.Model, error)
 }
 
+// CreateModel creates a new model.
 func CreateModel(s ModelStore, mzn string) (uuid.UUID, error) {
 
 	model := solver.NewModel(mzn)
@@ -42,10 +45,12 @@ func CreateModel(s ModelStore, mzn string) (uuid.UUID, error) {
 	return id, nil
 }
 
+// ModelExists checks whether a model already exists.
 func ModelExists(s ModelStore, id uuid.UUID) bool {
 	return s.Exists(id)
 }
 
+// SolveModel executes the solver on an existing model.
 func SolveModel(s ModelStore, id uuid.UUID) (*SolverResult, error) {
 
 	model, err := s.Load(id)
